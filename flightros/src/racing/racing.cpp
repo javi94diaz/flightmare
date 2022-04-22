@@ -45,6 +45,7 @@ int main(int argc, char *argv[]) {
 
   // Initialize gates
   std::string object_id = "unity_gate";
+
   std::string prefab_id = "rpg_gate";
   std::shared_ptr<StaticObject> gate_1 =
     std::make_shared<StaticObject>(object_id, prefab_id);
@@ -64,6 +65,27 @@ int main(int argc, char *argv[]) {
     std::make_shared<StaticGate>(object_id_3);
   gate_3->setPosition(Eigen::Vector3f(5, 0, 2.5));
   gate_3->setQuaternion(Quaternion(0.0, 0.0, 0.0, 1.0));
+
+  std::string object_id_4 = "pitch_gate";
+  std::shared_ptr<StaticObject> gate_4 =
+    std::make_shared<StaticGate>(object_id_4);
+  gate_4->setPosition(Eigen::Vector3f(5, 0, 2.5));
+  gate_4->setQuaternion(
+    Quaternion(std::cos(1 * M_PI_4), std::sin(1 * M_PI_4), 0.0, 0.0));
+
+  std::string object_id_5 = "roll_gate";
+  std::shared_ptr<StaticObject> gate_5 =
+    std::make_shared<StaticGate>(object_id_5);
+  gate_5->setPosition(Eigen::Vector3f(-5, 0, 2.5));
+  gate_5->setQuaternion(
+    Quaternion(std::cos(1 * M_PI_4), 0.0, std::sin(1 * M_PI_4), 0.0));
+
+  std::string object_id_6 = "yaw_gate";
+  std::shared_ptr<StaticObject> gate_6 =
+    std::make_shared<StaticGate>(object_id_6);
+  gate_6->setPosition(Eigen::Vector3f(10, 0, 2.5));
+  gate_6->setQuaternion(
+    Quaternion(std::cos(1 * M_PI_4), 0.0, 0.0, std::sin(1 * M_PI_4)));
 
   // Define path through gates
   std::vector<Eigen::Vector3d> way_points;
@@ -93,6 +115,9 @@ int main(int argc, char *argv[]) {
   unity_bridge_ptr->addStaticObject(gate_1);
   unity_bridge_ptr->addStaticObject(gate_2);
   unity_bridge_ptr->addStaticObject(gate_3);
+  unity_bridge_ptr->addStaticObject(gate_4);
+  unity_bridge_ptr->addStaticObject(gate_5);
+  unity_bridge_ptr->addStaticObject(gate_6);
   unity_bridge_ptr->addQuadrotor(quad_ptr);
   // connect unity
   unity_ready = unity_bridge_ptr->connectUnity(scene_id);

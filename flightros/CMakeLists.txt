@@ -58,6 +58,18 @@ target_link_libraries(flight_pilot_node
   stdc++fs
 )
 
+# Solar panels
+cs_add_executable(
+    solar_panel_node
+    src/panels/solar_panel_node.cpp
+    )
+
+target_link_libraries(solar_panel_node
+    flight_pilot
+    ${catkin_LIBRARIES}
+    stdc++fs
+)
+
 # motion_planning
 
 if(BUILD_MP)

@@ -5,10 +5,10 @@ namespace flightros {
 FlightPilot::FlightPilot(const ros::NodeHandle &nh, const ros::NodeHandle &pnh)
   : nh_(nh),
     pnh_(pnh),
-    scene_id_(UnityScene::INDUSTRIAL),
+    scene_id_(UnityScene::CUSTOM),
     unity_ready_(false),
     unity_render_(false),
-    receive_id_(0),
+    receive_id_(5),
     main_loop_freq_(50.0) {
   // load parameters
   if (!loadParams()) {

@@ -58,7 +58,7 @@ class FlightPilot {
 
   // Flightmare(Unity3D)
   std::shared_ptr<UnityBridge> unity_bridge_ptr_;
-  SceneID scene_id_{UnityScene::WAREHOUSE};
+  SceneID scene_id_{UnityScene::CUSTOM};
   bool unity_ready_{false};
   bool unity_render_{false};
   RenderMessage_t unity_output_;

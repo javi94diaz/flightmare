@@ -24,10 +24,11 @@ enum UnityScene {
   INDUSTRIAL = 0,
   WAREHOUSE = 1,
   GARAGE = 2,
-  TUNELS = 4,
   NATUREFOREST = 3,
+  TUNELS = 4,
+  CUSTOM = 5,
   // total number of environment
-  SceneNum = 5
+  SceneNum = 6
 };
 
 // Unity Camera, should not be used alone.
@@ -94,7 +95,7 @@ struct Object_t {
 
 struct SettingsMessage_t {
   // scene/render settings
-  size_t scene_id = UnityScene::WAREHOUSE;
+  size_t scene_id = UnityScene::CUSTOM;
 
   //
   std::vector<Vehicle_t> vehicles;
@@ -196,7 +197,7 @@ inline void from_json(const json &j, Sub_Vehicle_t &o) {
 }
 
 // json to our sub message data type
-// note: pub_vechicles is defined in Unity which corresponding
+// note: pub_vehicles is defined in Unity which corresponding
 // to our sub_vehicles in ROS.
 inline void from_json(const json &j, SubMessage_t &o) {
   o.frame_id = j.at("frame_id").get<uint64_t>();
