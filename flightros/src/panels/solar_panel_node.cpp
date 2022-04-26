@@ -2,6 +2,8 @@
 #include <image_transport/image_transport.h>
 #include <ros/ros.h>
 
+#include <unistd.h>
+
 // flightlib
 #include "flightlib/bridges/unity_bridge.hpp"
 #include "flightlib/common/quad_state.hpp"
@@ -10,7 +12,7 @@
 
 #include "flightlib/bridges/unity_message_types.hpp"
 #include "flightlib/objects/static_gate.hpp"
-#include "flightlib/objects/static_panel.hpp"
+#include "flightlib/objects/static_item.hpp"
 #include "flightlib/sensors/rgb_camera.hpp"
 
 // flightros
@@ -45,15 +47,7 @@ int main(int argc, char *argv[]) {
     Vector<3> quad_size(0.5, 0.5, 0.5);
     quad_ptr->setSize(quad_size);
 
-    // Initialize objects (panels, etc)
-
-    // Assets Prefab names in Unity:
-    //  SolarPanel.prefab
-    //  SolarPanelModif.prefab
-    //  HDCamera.prefab
-    //  DirectionalLight.prefab
-    //  Terrain.prefab
-
+    // Initialize unity objects
     std::string prefab_id_panel = "SolarPanel";
     std::string prefab_id_panel_mod = "SolarPanelModif";
     std::string prefab_id_light = "DirectionalLight";
@@ -61,51 +55,26 @@ int main(int argc, char *argv[]) {
     std::string prefab_id_cam = "HDCamera";
 
     std::string object_id = "panel1";
-    std::shared_ptr<StaticObject> panel_1 = 
-        std::make_shared<StaticPanel>(object_id, prefab_id_panel_mod);
+    std::shared_ptr<StaticItem> panel_1 = 
+        std::make_shared<StaticItem>(object_id, prefab_id_panel_mod);
     panel_1->setPosition(Eigen::Vector3f(-5, 0, 0));
     panel_1->setQuaternion(
         Quaternion(std::cos(1 * M_PI_4), 0.0, 0.0, std::sin(1 * M_PI_4)));
-
-    std::string object_id_2 = "light1";
-    std::shared_ptr<StaticObject> light_1 = 
-        std::make_shared<StaticGate>(object_id_2, prefab_id_light);
-    light_1->setPosition(Eigen::Vector3f(0, 0, 5));
-    light_1->setQuaternion(
-        Quaternion(std::cos(1 * M_PI_4), 0.0, 0.0, std::sin(1 * M_PI_4)));
-
-    std::string object_id_3 = "light2";
-    std::shared_ptr<StaticObject> light_2 = 
-        std::make_shared<StaticObject>(object_id_3, prefab_id_light);
-    light_2->setPosition(Eigen::Vector3f(5, 0, 0));
-    light_2->setQuaternion(
-        Quaternion(std::cos(1 * M_PI_4), 0.0, 0.0, std::sin(1 * M_PI_4)));        
+    
+    //Probamos funcion de JSON:
+    //panel_1->parseJson("scenario.json");
+    panel_1->parseYaml();
 
     ROS_INFO("***********ASIGNACION DE PREFAB*************");
     const std::string& prefab_asigned = panel_1->getPrefabID();
     std::cout << prefab_asigned << std::endl;
 
-    // Initialize test gates
-    // std::string object_id_4 = "pitch_gate";
-    // std::shared_ptr<StaticObject> gate_4 =
-    //     std::make_shared<StaticGate>(object_id_4);
-    // gate_4->setPosition(Eigen::Vector3f(-5, 5, 0));
-    // gate_4->setQuaternion(
-    //     Quaternion(std::cos(1 * M_PI_4), std::sin(1 * M_PI_4), 0.0, 0.0));
-
-    // std::string object_id_5 = "roll_gate";
-    // std::shared_ptr<StaticObject> gate_5 =
-    //     std::make_shared<StaticGate>(object_id_5);
-    // gate_5->setPosition(Eigen::Vector3f(0, 5, 0));
-    // gate_5->setQuaternion(
-    //     Quaternion(std::cos(1 * M_PI_4), 0.0, std::sin(1 * M_PI_4), 0.0));
-
-    // std::string object_id_6 = "yaw_gate";
-    // std::shared_ptr<StaticObject> gate_6 =
-    //     std::make_shared<StaticGate>(object_id_6);
-    // gate_6->setPosition(Eigen::Vector3f(5, 5, 0));
-    // gate_6->setQuaternion(
-    //     Quaternion(std::cos(1 * M_PI_4), 0.0, 0.0, std::sin(1 * M_PI_4)));
+    std::string object_id_2 = "light1";
+    std::shared_ptr<StaticObject> light_1 =     
+        std::make_shared<StaticGate>(object_id_2, prefab_id_light);
+    light_1->setPosition(Eigen::Vector3f(0, 0, 5));
+    light_1->setQuaternion(
+        Quaternion(std::cos(1 * M_PI_4), 0.0, 0.0, std::sin(1 * M_PI_4)));
 
     // Define path through gates
     std::vector<Eigen::Vector3d> way_points;
@@ -131,29 +100,29 @@ int main(int argc, char *argv[]) {
 
     // Start racing
     ros::Time t0 = ros::Time::now();
+    unsigned int microseconds = 1000000;
+    int posPanel = -5;
 
     // Add to unity
     unity_bridge_ptr->addStaticObject(panel_1);
     unity_bridge_ptr->addStaticObject(light_1);
-    unity_bridge_ptr->addStaticObject(light_2);
-    // unity_bridge_ptr->addStaticObject(gate_4);
-    // unity_bridge_ptr->addStaticObject(gate_5);
-    // unity_bridge_ptr->addStaticObject(gate_6);
     unity_bridge_ptr->addQuadrotor(quad_ptr);
 
     // Connect to unity
     unity_ready = unity_bridge_ptr->connectUnity(scene_id);
 
     // Main loop
-
     FrameID frame_id = 0;
     while (ros::ok() && unity_ready) {
+        
+        // Getting next pose of quadrotor from trajectory
         quadrotor_common::TrajectoryPoint desired_pose =
             polynomial_trajectories::getPointFromTrajectory(
                 trajectory, 
                 ros::Duration((ros::Time::now() - t0))
             );
         
+        // Setting the pose to the quadrotor
         quad_state.x[QS::POSX] = (Scalar)desired_pose.position.x();
         quad_state.x[QS::POSY] = (Scalar)desired_pose.position.y();
         quad_state.x[QS::POSZ] = (Scalar)desired_pose.position.z();
@@ -163,6 +132,11 @@ int main(int argc, char *argv[]) {
         quad_state.x[QS::ATTZ] = (Scalar)desired_pose.orientation.z();
 
         quad_ptr->setState(quad_state);
+
+        // Move the panel to next position and wait 1 second
+        // posPanel = -posPanel;
+        // panel_1->setPosition(Eigen::Vector3f(posPanel, 0, 0));
+        // usleep(microseconds);
 
         unity_bridge_ptr->getRender(frame_id);
         unity_bridge_ptr->handleOutput();
