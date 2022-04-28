@@ -13,6 +13,7 @@
 #include "flightlib/bridges/unity_message_types.hpp"
 #include "flightlib/objects/static_gate.hpp"
 #include "flightlib/objects/static_item.hpp"
+#include "flightlib/objects/scenario.hpp"
 #include "flightlib/sensors/rgb_camera.hpp"
 
 // flightros
@@ -47,36 +48,30 @@ int main(int argc, char *argv[]) {
     Vector<3> quad_size(0.5, 0.5, 0.5);
     quad_ptr->setSize(quad_size);
 
-    // Initialize unity objects
+    // Initialize Unity Scenario
+    std::shared_ptr<Scenario> scenario_1 = std::make_shared<Scenario>();
+    
+    // Reading YAML file containing all items
+    bool yaml_success = scenario_1->parseYaml(
+        "../catkin_ws/src/flightmare/flightros/src/resources/scenario.yaml"
+        );
+    
+    // Prefab names in Unity
     std::string prefab_id_panel = "SolarPanel";
     std::string prefab_id_panel_mod = "SolarPanelModif";
     std::string prefab_id_light = "DirectionalLight";
     std::string prefab_id_terrain = "Terrain";
     std::string prefab_id_cam = "HDCamera";
 
+    // Initialize Unity objects manually
     std::string object_id = "panel1";
     std::shared_ptr<StaticItem> panel_1 = 
         std::make_shared<StaticItem>(object_id, prefab_id_panel_mod);
     panel_1->setPosition(Eigen::Vector3f(-5, 0, 0));
     panel_1->setQuaternion(
         Quaternion(std::cos(1 * M_PI_4), 0.0, 0.0, std::sin(1 * M_PI_4)));
-    
-    //Probamos funcion de JSON:
-    //panel_1->parseJson("scenario.json");
-    panel_1->parseYaml();
 
-    ROS_INFO("***********ASIGNACION DE PREFAB*************");
-    const std::string& prefab_asigned = panel_1->getPrefabID();
-    std::cout << prefab_asigned << std::endl;
-
-    std::string object_id_2 = "light1";
-    std::shared_ptr<StaticObject> light_1 =     
-        std::make_shared<StaticGate>(object_id_2, prefab_id_light);
-    light_1->setPosition(Eigen::Vector3f(0, 0, 5));
-    light_1->setQuaternion(
-        Quaternion(std::cos(1 * M_PI_4), 0.0, 0.0, std::sin(1 * M_PI_4)));
-
-    // Define path through gates
+    // Define path of quadrotor through gates
     std::vector<Eigen::Vector3d> way_points;
     way_points.push_back(Eigen::Vector3d(0, 10, 2.5));
     way_points.push_back(Eigen::Vector3d(5, 0, 2.5));
@@ -104,9 +99,21 @@ int main(int argc, char *argv[]) {
     int posPanel = -5;
 
     // Add to unity
-    unity_bridge_ptr->addStaticObject(panel_1);
-    unity_bridge_ptr->addStaticObject(light_1);
-    unity_bridge_ptr->addQuadrotor(quad_ptr);
+    if (yaml_success)
+    {
+        ros::ROS_INFO["Adding objects to Unity"];
+        unity_bridge_ptr->addQuadrotor(quad_ptr);
+        unity_bridge_ptr->addStaticObject(panel_1);
+
+        for(int i = 0; i < scenario_1->item_list.size(); ++i)
+        {
+            unity_bridge_ptr->addStaticObject(scenario_1->item_list[i]);
+        }
+    }
+    else
+    {
+        ros::ROS_INFO["Error reading YAML file"];
+    }
 
     // Connect to unity
     unity_ready = unity_bridge_ptr->connectUnity(scene_id);

@@ -1,0 +1,98 @@
+# YAML file with Unity objects attributes
+---
+object_1:
+  id: "unity_panel_1"
+  prefab_id: "SolarPanel"
+  position:
+    x : 0.0
+    y : 0.0
+    z : 0.0
+  quaternion:
+    w : 0.7071
+    x : 0.0
+    y : 0.0
+    z : -0.7071
+  size:
+    x : 1.0
+    y : 1.0
+    z : 1.0
+object_2:
+  id: "unity_light_1"
+  prefab_id: "DirectionalLight"
+  position:
+    x : 0.0
+    y : 0.0
+    z : 10.0
+  quaternion:
+    w : 0.0
+    x : 0.0
+    y : 0.0
+    z : 0.0
+  size:
+    x : 1.0
+    y : 1.0
+    z : 1.0
+object_3:
+  id: "unity_panel_2"
+  prefab_id: "SolarPanel"
+  position:
+    x : 5.0
+    y : 0.0
+    z : 0.0
+  quaternion:
+    w : 0.7071
+    x : 0.0
+    y : 0.0
+    z : -0.7071
+  size:
+    x : 1.0
+    y : 1.0
+    z : 1.0
+object_4:
+  id: "unity_panel_3"
+  prefab_id: "SolarPanel"
+  position:
+    x : 0.0
+    y : 5.0
+    z : 0.0
+  quaternion:
+    w : 0.7071
+    x : 0.0
+    y : 0.0
+    z : -0.7071
+  size:
+    x : 1.0
+    y : 1.0
+    z : 1.0
+object_5:
+  id: "unity_panel_4"
+  prefab_id: "SolarPanel"
+  position:
+    x : 5.0
+    y : 5.0
+    z : 0.0
+  quaternion:
+    w : 0.7071
+    x : 0.0
+    y : 0.0
+    z : -0.7071
+  size:
+    x : 1.0
+    y : 1.0
+    z : 1.0
+object_6:
+  id: "unity_panel_5"
+  prefab_id: "SolarPanel"
+  position:
+    x : 10.0
+    y : 5.0
+    z : 0.0
+  quaternion:
+    w : 0.7071
+    x : 0.0
+    y : 0.0
+    z : -0.7071
+  size:
+    x : 1.0
+    y : 1.0
+    z : 1.0
