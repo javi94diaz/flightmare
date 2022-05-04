@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
     // Initialize Unity Scenario
     std::shared_ptr<Scenario> scenario_1 = std::make_shared<Scenario>();
     
-    // Reading YAML file containing all items
+    // Reading YAML file containing some items
     bool yaml_success = scenario_1->parseYaml(
         "../catkin_ws/src/flightmare/flightros/src/resources/scenario.yaml"
         );
@@ -63,13 +63,42 @@ int main(int argc, char *argv[]) {
     std::string prefab_id_terrain = "Terrain";
     std::string prefab_id_cam = "HDCamera";
 
-    // Initialize Unity objects manually
-    std::string object_id = "panel1";
-    std::shared_ptr<StaticItem> panel_1 = 
-        std::make_shared<StaticItem>(object_id, prefab_id_panel_mod);
-    panel_1->setPosition(Eigen::Vector3f(-5, 0, 0));
-    panel_1->setQuaternion(
-        Quaternion(std::cos(1 * M_PI_4), 0.0, 0.0, std::sin(1 * M_PI_4)));
+    // Initialize Unity objects manually with flightlib methods
+    // std::string object_id = "panel1";
+    // std::shared_ptr<StaticItem> panel_1 = 
+    //     std::make_shared<StaticItem>(object_id, prefab_id_panel_mod);
+    // panel_1->setPosition(Eigen::Vector3f(-5, 0, 0));
+    // panel_1->setQuaternion(
+    //     Quaternion(std::cos(1 * M_PI_4), 0.0, 0.0, std::sin(1 * M_PI_4)));
+
+
+    /* Pruebas: 
+    addObject OK
+    deleteObject
+    setPosition OK
+    setQuaternion OK
+    getObject string OK
+    getObject int OK
+    parseYaml OK
+    numItems OK
+
+    */
+
+    std::cout << "\nNUMITEMS ANTES: " << scenario_1->numItems() << std::endl;
+
+    // Adding a panel manually into the list
+    bool addSuccess = scenario_1->addObject( 
+        "panel_manual", 
+        prefab_id_panel, 
+        Eigen::Vector3f(10, 0, 1),
+        Quaternion(std::cos(1 * M_PI_4), 0.0, 0.0, std::sin(1 * M_PI_4))
+        );
+
+    std::cout << "\nNUMITEMS DESPUES: " << scenario_1->numItems() << std::endl;
+
+
+
+
 
     // Define path of quadrotor through gates
     std::vector<Eigen::Vector3d> way_points;
@@ -96,23 +125,25 @@ int main(int argc, char *argv[]) {
     // Start racing
     ros::Time t0 = ros::Time::now();
     unsigned int microseconds = 1000000;
-    int posPanel = -5;
+    int posPanel = -3;
+    float orienPanel = -0.7071;
 
     // Add to unity
     if (yaml_success)
     {
-        ros::ROS_INFO["Adding objects to Unity"];
+        //ros::ROS_INFO["Adding objects to Unity"];
+        std::cout << "Adding objects to Unity" << std::endl;
         unity_bridge_ptr->addQuadrotor(quad_ptr);
-        unity_bridge_ptr->addStaticObject(panel_1);
 
-        for(int i = 0; i < scenario_1->item_list.size(); ++i)
+        for(int i = 0; i < scenario_1->numItems(); ++i)
         {
-            unity_bridge_ptr->addStaticObject(scenario_1->item_list[i]);
+            unity_bridge_ptr->addStaticObject( scenario_1->getObject(i) );
         }
     }
     else
     {
-        ros::ROS_INFO["Error reading YAML file"];
+        //ros::ROS_INFO["Error reading YAML file"];
+        std::cout << "Error adding objects to Unity" << std::endl;
     }
 
     // Connect to unity
@@ -138,18 +169,27 @@ int main(int argc, char *argv[]) {
         quad_state.x[QS::ATTY] = (Scalar)desired_pose.orientation.y();
         quad_state.x[QS::ATTZ] = (Scalar)desired_pose.orientation.z();
 
-        quad_ptr->setState(quad_state);
+        //quad_ptr->setState(quad_state);
 
         // Move the panel to next position and wait 1 second
-        // posPanel = -posPanel;
-        // panel_1->setPosition(Eigen::Vector3f(posPanel, 0, 0));
-        // usleep(microseconds);
+        posPanel = -posPanel;
+        scenario_1->setPosition("unity_panel_2", Eigen::Vector3f(posPanel, 0, 0));
+        scenario_1->setQuaternion("unity_panel_2", Quaternion(0.7071, 0.0, 0.0, -orienPanel));
+        //panel_1->setPosition(Eigen::Vector3f(posPanel, 0, 0));
+        usleep(microseconds);
 
         unity_bridge_ptr->getRender(frame_id);
         unity_bridge_ptr->handleOutput();
 
         //
         frame_id += 1;
-    }
 
+        // if (frame_id == 5)
+        // {
+        //     std::cout << "BORRANDO PANEL DE UNITY (true/false): " << scenario_1->deleteObject("unity_panel_2") << std::endl;
+        //     break;
+        // }
+
+    }
+    std::cout << "Finished";
 }

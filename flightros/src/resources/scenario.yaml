@@ -34,7 +34,7 @@ object_2:
     z : 1.0
 object_3:
   id: "unity_panel_2"
-  prefab_id: "SolarPanel"
+  prefab_id: "SolarPanelModif"
   position:
     x : 5.0
     y : 0.0
