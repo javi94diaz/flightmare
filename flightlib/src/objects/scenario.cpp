@@ -2,78 +2,74 @@
 
 namespace flightlib {
 
+    // Outputs the elements of hash_map
+    void Scenario::printMap()
+    {
+        std::cout << "**** Printing map:\n";
+        for (const auto& n : hash_map) {
+            std::cout << n.first << " = " << n.second << "\n";
+        }
+    }
+
+
+    // Checks if an item exists in the hash table by its id
     bool Scenario::exists(const std::string& id)
     {
-        try
-        {
-            if ( hash_map[id] != nullptr){
-                return true;
-                std::cout << "Object found\n";
-            }
-            else
-            {
-                std::cout << "Null pointer\n";
-                return false;
-            }
-        }
-        catch(const std::exception& e)
-        {
-            std::cerr << e.what() << '\n';
-            std::cout << "Object not found\n";
-            return false;
+        return hash_map.count(id) != 0;      
+    }
 
+    
+    // Recover object from hash_map by its id
+    std::shared_ptr<StaticItem> Scenario::getObject (const std::string& id)
+    {
+        if ( exists(id) )
+        {
+            return hash_map[id];
         }
+        else
+        {
+            return nullptr;
+        } 
     }
 
 
     // Adds an item to the list manually
     bool Scenario::addObject (const std::string& id, const std::string& prefab_id, 
-            const Vector<3>& position, const Quaternion& quaternion)
+        const Vector<3>& position, const Quaternion& quaternion)
     {
-        if ( exists(id) )
+        if ( !exists(id) )
         {
-            // Create an auxiliar item as a shared_ptr
+            // Create an auxiliar item with a shared_ptr to StaticItem
             std::shared_ptr<StaticItem> aux_item = std::make_shared<StaticItem>(id, prefab_id);
             aux_item->setPosition(position);
             aux_item->setQuaternion(quaternion);
 
-            // Pushes the item into the list and updates the hash table
-            item_list.push_back(aux_item);
-            //hash_map[ id ] = numItems() - 1;
+            // Pushes the item into the hash table
             hash_map[ id ] = aux_item;
 
-            // Viendo el mapa
-            std::cout << "**** Viendo el mapa:\n";
-            for (const auto& n : hash_map) {
-                std::cout << n.first << " = " << n.second << "\n";
-            }
-
+            std::cout << "Adding...";;
+            unity_bridge_ptr_->addStaticObject(aux_item);
+            std::cout << " Added " << id << " to Unity succesfully" <<std::endl;
+            
+            printMap();
+            
             return true;
         }
         else
         {
+            std::cout << "Object " << id << " not added" <<std::endl;
             return false;
         }
     }
-
 
     // Deletes an existing object from the item list
     bool Scenario::deleteObject(const std::string& id)
     {
         try
         {
-            //int index = hash_map[id];
-
-            // Removes the item from /*the list and its entry in*/ the hash table
-            //getItemList().erase( getItemList().begin() + index );
+            // Removes the item from the hash table
             hash_map.erase(id);
-
-            // Viendo el mapa
-            std::cout << "**** Viendo el mapa:\n";
-            for (const auto& n : hash_map) {
-                std::cout << n.first << " = " << n.second << "\n";
-            }
-
+            printMap();
             return true;
         }
         catch(const std::exception& e)
@@ -89,8 +85,7 @@ namespace flightlib {
     {
         try
         {
-            int index = hash_map[id];
-            getItemList()[index]->setPosition(position);
+            hash_map[id]->setPosition(position);
             return true;
         }
         catch(const std::exception& e)
@@ -106,8 +101,7 @@ namespace flightlib {
     {
         try
         {
-            int index = hash_map[id];
-            getItemList()[index]->setQuaternion(quaternion);
+            hash_map[id]->setQuaternion(quaternion);
             return true;
         }
         catch(const std::exception& e)
@@ -120,38 +114,17 @@ namespace flightlib {
 
 
     // Get number of Unity objects in the Scenario
-    // int Scenario::numItems()
-    // {
-    //     return getItemList().size();
-    // }
-
-
-    // Recover object from list by string id
-    // std::shared_ptr<StaticItem> Scenario::getObject (const std::string& id)
-    // {
-    //     int index = hash_map[id];
-    //     return getItemList()[index];
-    // }
-    
-
-    // Recover object from list by numeric index
-    // std::shared_ptr<StaticItem> Scenario::getObject (const int& index)
-    // {
-    //     return getItemList()[index];
-    // }
-
-
-    // Private getter for item_list
-    std::vector< std::shared_ptr<StaticItem> > Scenario::getItemList(){
-        return Scenario::item_list;
+    int Scenario::numItems()
+    {
+        return hash_map.size();
+        printMap();
     }
 
 
-    // Reads YAML file indicated in filename
-    bool Scenario::parseYaml(const std::string& filename)
+    // Reads YAML file indicated in filename, returning true if ok, false if not
+    bool Scenario::parseYaml(
+        const std::string& filename)
     {
-        // Returns true if parsing is ok
-        bool ret = true;
         std::cout << "Parsing YAML file" << std::endl;
         
         try
@@ -161,6 +134,11 @@ namespace flightlib {
             std::ifstream filestream(filename);
             node = YAML::Load(filestream);
 
+            // Prints parsed YAML file with Emitter
+            // YAML::Emitter emitter;
+            // emitter << node;
+            // std::cout<< "EMITTER Node:\n" << emitter.c_str() << std::endl;
+
             // Iterates over the keys to read the information below each node
             for ( YAML::const_iterator iter = node.begin(); iter != node.end() ; ++iter ) 
             {
@@ -168,6 +146,8 @@ namespace flightlib {
                 // Current node key
                 std::string key = iter->first.as<std::string>();
                 
+                //std::cout << "key: "<< key << std::endl;
+
                 // Current item position and orientation
                 Vector<3> posit = {
                     node[key]["position"]["x"].as<float>(),
@@ -175,12 +155,17 @@ namespace flightlib {
                     node[key]["position"]["z"].as<float>()
                     };
 
+                //std::cout << "position created: "<< posit << std::endl;
+
+
                 Quaternion quat = Quaternion(
                     node[key]["quaternion"]["w"].as<float>(),
                     node[key]["quaternion"]["x"].as<float>(),
                     node[key]["quaternion"]["y"].as<float>(),
                     node[key]["quaternion"]["z"].as<float>()
                     );              
+
+                //std::cout << "quaternion created z: "<< node[key]["quaternion"]["z"].as<float>() << std::endl;
 
                 // Adds item of current key to the list and the map
                 if ( addObject(
@@ -198,57 +183,16 @@ namespace flightlib {
                     std::cout << "Not added" << std::endl; 
                 }
 
-
-                // Create an auxiliar item as a shared_ptr
-                // taking the id and prefab_id from current key
-                // std::shared_ptr<StaticItem> aux_item =
-                // std::make_shared<StaticItem>(
-                //     node[key]["id"].as<std::string>(),
-                //     node[key]["prefab_id"].as<std::string>()
-                // );
+                printMap();
                 
-                // Sets position with a Vector3 and current key
-                // aux_item->setPosition(
-                //     {
-                //     node[key]["position"]["x"].as<float>(),
-                //     node[key]["position"]["y"].as<float>(),
-                //     node[key]["position"]["z"].as<float>()
-                //     }
-                // );
-
-                // Sets orientation with Quaternion and current key
-                // aux_item->setQuaternion(
-                //     Quaternion(
-                //         node[key]["quaternion"]["w"].as<float>(),
-                //         node[key]["quaternion"]["x"].as<float>(),
-                //         node[key]["quaternion"]["y"].as<float>(),
-                //         node[key]["quaternion"]["z"].as<float>()
-                //     )
-                // );
-                
-                // Saves the item into the list of the Scenario
-                //item_list.push_back(aux_item);
-
-                // Updating the hash table with id-index pair
-                // /*hash_map[ node[key]["id"].as<std::string>() ] = index;*/
-                //hash_map[ node[key]["id"].as<std::string>() ] = aux_item;
-                
-
-                // Ver el mapa como se va rellenando
-                std::cout << "**** Viendo el mapa:\n";
-                for (const auto& n : hash_map) {
-                    std::cout << n.first << " = " << n.second << "\n";
-                }
             }
+            return true;
         }
         catch(const std::exception& e)
         {
-            // Returns false in case of error
             std::cerr << e.what() << '\n';
-            ret = false;
+            return false;
         }
-
-        return ret;
     }
 
 }  // namespace flightlib

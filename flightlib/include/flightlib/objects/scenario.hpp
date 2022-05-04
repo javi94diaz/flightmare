@@ -12,30 +12,28 @@ namespace flightlib {
 
 class Scenario {
     public:
-        Scenario() {}
-        ~Scenario(){}
+        Scenario(std::shared_ptr<UnityBridge>& unity_bridge_ptr )
+        : unity_bridge_ptr_(unity_bridge_ptr){};
+        ~Scenario(){};
 
+        void printMap();
         bool exists(const std::string& id);
 
-        bool addObject (
-            const std::string& id, 
-            const std::string& prefab_id, 
-            const Vector<3>& position, 
-            const Quaternion& quaternion
-            );
+        std::shared_ptr<StaticItem> getObject (const std::string& id);
+
+        bool addObject (const std::string& id, const std::string& prefab_id, 
+            const Vector<3>& position, const Quaternion& quaternion);
                 
         bool deleteObject(const std::string& id);
         bool setPosition (const std::string& id, const Vector<3>& position);
         bool setQuaternion (const std::string& id, const Quaternion& quaternion);
-        //int numItems();
+        int numItems();
         bool parseYaml (const std::string& filepath);
-        bool parseYaml (const std::string& filepath, std::shared_ptr<UnityBridge>);
-        //std::shared_ptr<StaticItem> getObject (const std::string& id);
-        //std::shared_ptr<StaticItem> getObject (const int& index);
 
     private:
         // Map of items to render in Unity: pairs <id, pointer>
         std::map<std::string, std::shared_ptr<StaticItem> > hash_map;
+        std::shared_ptr<UnityBridge> unity_bridge_ptr_;
 
         // List of items to render in Unity
         //std::map< std::shared_ptr<StaticItem> > getItemList();

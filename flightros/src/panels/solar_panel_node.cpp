@@ -49,12 +49,17 @@ int main(int argc, char *argv[]) {
     quad_ptr->setSize(quad_size);
 
     // Initialize Unity Scenario
-    std::shared_ptr<Scenario> scenario_1 = std::make_shared<Scenario>();
+    std::shared_ptr<Scenario> scenario_1 = std::make_shared<Scenario>(unity_bridge_ptr);
     
+    std::cout << "\nNUMITEMS ANTES DEL YAML: " << scenario_1->numItems() << std::endl;
+
     // Reading YAML file containing some items
     bool yaml_success = scenario_1->parseYaml(
-        "../catkin_ws/src/flightmare/flightros/src/resources/scenario.yaml"
-        );
+        "../catkin_ws/src/flightmare/flightros/src/resources/scenario.yaml");
+
+    std::cout << "\nNUMITEMS DESPUES del YAML:" << scenario_1->numItems() << std::endl;
+    scenario_1->printMap();
+
     
     // Prefab names in Unity
     std::string prefab_id_panel = "SolarPanel";
@@ -64,6 +69,7 @@ int main(int argc, char *argv[]) {
     std::string prefab_id_cam = "HDCamera";
 
     // Initialize Unity objects manually with flightlib methods
+
     // std::string object_id = "panel1";
     // std::shared_ptr<StaticItem> panel_1 = 
     //     std::make_shared<StaticItem>(object_id, prefab_id_panel_mod);
@@ -72,32 +78,20 @@ int main(int argc, char *argv[]) {
     //     Quaternion(std::cos(1 * M_PI_4), 0.0, 0.0, std::sin(1 * M_PI_4)));
 
 
-    /* Pruebas: 
-    addObject OK
-    deleteObject
-    setPosition OK
-    setQuaternion OK
-    getObject string OK
-    getObject int OK
-    parseYaml OK
-    numItems OK
 
-    */
-
-    std::cout << "\nNUMITEMS ANTES: " << scenario_1->numItems() << std::endl;
-
-    // Adding a panel manually into the list
+    // Adding a panel manually into the map
     bool addSuccess = scenario_1->addObject( 
-        "panel_manual", 
+        "panel_manual",
         prefab_id_panel, 
         Eigen::Vector3f(10, 0, 1),
         Quaternion(std::cos(1 * M_PI_4), 0.0, 0.0, std::sin(1 * M_PI_4))
         );
 
-    std::cout << "\nNUMITEMS DESPUES: " << scenario_1->numItems() << std::endl;
+    std::cout << "NO EXISTE: " << scenario_1->exists("patata") << std::endl;
+    std::cout << "SI EXISTE: " << scenario_1->exists("panel_manual") << std::endl;
 
-
-
+    std::cout << "\nNUMITEMS DESPUES del YAML Y panel_manual: " << scenario_1->numItems() << std::endl;
+    scenario_1->printMap();
 
 
     // Define path of quadrotor through gates
@@ -129,22 +123,9 @@ int main(int argc, char *argv[]) {
     float orienPanel = -0.7071;
 
     // Add to unity
-    if (yaml_success)
-    {
-        //ros::ROS_INFO["Adding objects to Unity"];
-        std::cout << "Adding objects to Unity" << std::endl;
-        unity_bridge_ptr->addQuadrotor(quad_ptr);
+    std::cout << "Adding quadrotor to Unity" << std::endl;
+    unity_bridge_ptr->addQuadrotor(quad_ptr);
 
-        for(int i = 0; i < scenario_1->numItems(); ++i)
-        {
-            unity_bridge_ptr->addStaticObject( scenario_1->getObject(i) );
-        }
-    }
-    else
-    {
-        //ros::ROS_INFO["Error reading YAML file"];
-        std::cout << "Error adding objects to Unity" << std::endl;
-    }
 
     // Connect to unity
     unity_ready = unity_bridge_ptr->connectUnity(scene_id);
@@ -169,14 +150,14 @@ int main(int argc, char *argv[]) {
         quad_state.x[QS::ATTY] = (Scalar)desired_pose.orientation.y();
         quad_state.x[QS::ATTZ] = (Scalar)desired_pose.orientation.z();
 
-        //quad_ptr->setState(quad_state);
+        quad_ptr->setState(quad_state);
 
         // Move the panel to next position and wait 1 second
-        posPanel = -posPanel;
-        scenario_1->setPosition("unity_panel_2", Eigen::Vector3f(posPanel, 0, 0));
-        scenario_1->setQuaternion("unity_panel_2", Quaternion(0.7071, 0.0, 0.0, -orienPanel));
-        //panel_1->setPosition(Eigen::Vector3f(posPanel, 0, 0));
-        usleep(microseconds);
+        // posPanel = -posPanel;
+        // scenario_1->setPosition("unity_panel_2", Eigen::Vector3f(posPanel, 0, 0));
+        // scenario_1->setQuaternion("unity_panel_2", Quaternion(0.7071, 0.0, 0.0, -orienPanel));
+        // //panel_1->setPosition(Eigen::Vector3f(posPanel, 0, 0));
+        // usleep(microseconds);
 
         unity_bridge_ptr->getRender(frame_id);
         unity_bridge_ptr->handleOutput();
