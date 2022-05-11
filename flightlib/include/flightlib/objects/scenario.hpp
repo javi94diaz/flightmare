@@ -23,7 +23,7 @@ class Scenario {
 
         bool addObject (const std::string& id, const std::string& prefab_id, 
             const Vector<3>& position, const Quaternion& quaternion);
-                
+        
         bool deleteObject(const std::string& id);
         bool setPosition (const std::string& id, const Vector<3>& position);
         bool setQuaternion (const std::string& id, const Quaternion& quaternion);
